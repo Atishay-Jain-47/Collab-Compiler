@@ -1,0 +1,439 @@
+import React, { useState } from "react";
+import toast from "react-hot-toast";
+import { apiConnector } from "../services/apiConnector";
+import { aiEndpoints } from "../services/apis";
+
+/**
+ * Parses markdown formatted text into structured, styled React elements.
+ * Renders headers, lists, code blocks, bold text, inline code, and quotes cleanly.
+ */
+function MarkdownRenderer({ content }) {
+  if (!content) return null;
+
+  const lines = content.split("\n");
+  const elements = [];
+  let inCodeBlock = false;
+  let codeBlockLines = [];
+  let codeBlockLang = "";
+
+  const renderInline = (text) => {
+    // Process bold, inline code, italic
+    const parts = [];
+    let remaining = text;
+    let key = 0;
+
+    while (remaining.length > 0) {
+      // Inline code: `code`
+      const codeMatch = remaining.match(/`([^`]+)`/);
+      // Bold: **text** or __text__
+      const boldMatch = remaining.match(/\*\*([^*]+)\*\*/);
+
+      let firstMatch = null;
+      let matchType = null;
+
+      if (codeMatch && (!boldMatch || codeMatch.index < boldMatch.index)) {
+        firstMatch = codeMatch;
+        matchType = "code";
+      } else if (boldMatch) {
+        firstMatch = boldMatch;
+        matchType = "bold";
+      }
+
+      if (!firstMatch) {
+        parts.push(remaining);
+        break;
+      }
+
+      const matchIndex = firstMatch.index;
+      if (matchIndex > 0) {
+        parts.push(remaining.substring(0, matchIndex));
+      }
+
+      if (matchType === "code") {
+        parts.push(
+          <code
+            key={key++}
+            className="px-1.5 py-0.5 rounded bg-gray-800 text-purple-300 font-mono text-[11px] border border-gray-700"
+          >
+            {firstMatch[1]}
+          </code>
+        );
+      } else if (matchType === "bold") {
+        parts.push(
+          <strong key={key++} className="font-semibold text-white">
+            {firstMatch[1]}
+          </strong>
+        );
+      }
+
+      remaining = remaining.substring(matchIndex + firstMatch[0].length);
+    }
+
+    return parts;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Code block toggle
+    if (line.trim().startsWith("```")) {
+      if (inCodeBlock) {
+        // End of code block
+        elements.push(
+          <div
+            key={`cb-${i}`}
+            className="my-3 rounded-lg overflow-hidden border border-gray-700/60 bg-[#121217]"
+          >
+            {codeBlockLang && (
+              <div className="px-3 py-1 bg-gray-800/80 text-[10px] uppercase font-mono text-gray-400 border-b border-gray-700/40">
+                {codeBlockLang}
+              </div>
+            )}
+            <pre className="p-3 text-[11px] font-mono text-gray-200 overflow-x-auto">
+              <code>{codeBlockLines.join("\n")}</code>
+            </pre>
+          </div>
+        );
+        inCodeBlock = false;
+        codeBlockLines = [];
+        codeBlockLang = "";
+      } else {
+        inCodeBlock = true;
+        codeBlockLang = line.trim().replace(/^```/, "").trim();
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeBlockLines.push(line);
+      continue;
+    }
+
+    const trimmed = line.trim();
+
+    // Horizontal Rule
+    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+      elements.push(<hr key={`hr-${i}`} className="my-3 border-gray-800" />);
+      continue;
+    }
+
+    // Headings
+    if (trimmed.startsWith("### ")) {
+      elements.push(
+        <h3
+          key={`h3-${i}`}
+          className="text-sm font-bold text-purple-300 mt-3.5 mb-1.5 flex items-center gap-1.5"
+        >
+          {renderInline(trimmed.substring(4))}
+        </h3>
+      );
+      continue;
+    }
+    if (trimmed.startsWith("## ")) {
+      elements.push(
+        <h2
+          key={`h2-${i}`}
+          className="text-sm font-bold text-indigo-300 mt-4 mb-2"
+        >
+          {renderInline(trimmed.substring(3))}
+        </h2>
+      );
+      continue;
+    }
+    if (trimmed.startsWith("# ")) {
+      elements.push(
+        <h1
+          key={`h1-${i}`}
+          className="text-base font-bold text-white mt-4 mb-2"
+        >
+          {renderInline(trimmed.substring(2))}
+        </h1>
+      );
+      continue;
+    }
+
+    // Blockquote
+    if (trimmed.startsWith("> ")) {
+      elements.push(
+        <blockquote
+          key={`bq-${i}`}
+          className="my-2 pl-3 py-1 border-l-2 border-purple-500 bg-purple-950/20 text-purple-200 text-xs italic rounded-r"
+        >
+          {renderInline(trimmed.substring(2))}
+        </blockquote>
+      );
+      continue;
+    }
+
+    // Unordered List (- or *)
+    if (trimmed.match(/^[-*]\s+/)) {
+      const itemText = trimmed.replace(/^[-*]\s+/, "");
+      elements.push(
+        <li
+          key={`li-${i}`}
+          className="ml-4 list-disc list-outside text-gray-300 my-0.5"
+        >
+          {renderInline(itemText)}
+        </li>
+      );
+      continue;
+    }
+
+    // Numbered List (1. 2.)
+    if (trimmed.match(/^\d+\.\s+/)) {
+      const itemText = trimmed.replace(/^\d+\.\s+/, "");
+      elements.push(
+        <li
+          key={`nli-${i}`}
+          className="ml-4 list-decimal list-outside text-gray-300 my-0.5"
+        >
+          {renderInline(itemText)}
+        </li>
+      );
+      continue;
+    }
+
+    // Empty lines
+    if (trimmed === "") {
+      elements.push(<div key={`sp-${i}`} className="h-1.5" />);
+      continue;
+    }
+
+    // Regular paragraph
+    elements.push(
+      <p key={`p-${i}`} className="text-gray-300 leading-relaxed my-1">
+        {renderInline(line)}
+      </p>
+    );
+  }
+
+  return <div className="space-y-0.5 text-xs font-sans">{elements}</div>;
+}
+
+/**
+ * AiAssistant Component.
+ * Interactive AI drawer powered by Google Gemini API.
+ * Provides Explain Code, Fix Bugs, Optimize Complexity, and custom question actions
+ * with a 1-click "Apply to Editor" feature to update CodeMirror / Yjs collaboratively.
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Drawer open state
+ * @param {function} props.onClose - Drawer close handler
+ * @param {string} props.currentCode - Active code in editor
+ * @param {string} props.currentLanguage - Active programming language
+ * @param {string} props.currentOutput - Active stdout/stderr from runner
+ * @param {function} props.onApplyCode - Callback to apply AI suggested code to editor
+ */
+function AiAssistant({
+  isOpen,
+  onClose,
+  currentCode,
+  currentLanguage,
+  currentOutput,
+  onApplyCode,
+}) {
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+
+  if (!isOpen) return null;
+
+
+  const handleAsk = async (action, customMsg = "") => {
+    if (!currentCode || currentCode.trim() === "") {
+      toast.error("Please write or open some code first!");
+      return;
+    }
+
+    setLoading(true);
+    setAiResult(null);
+
+    try {
+      const payload = {
+        code: currentCode,
+        language: currentLanguage,
+        error: currentOutput || "",
+        action: action,
+        userMessage: customMsg,
+      };
+
+      const response = await apiConnector("POST", aiEndpoints.ASK_AI_API, payload, {
+        "Content-Type": "application/json",
+      });
+
+      if (response.data && response.data.success) {
+        setAiResult(response.data);
+      } else {
+        toast.error(response.data?.error || "Failed to get AI suggestions");
+      }
+    } catch (err) {
+      console.error("AI Error:", err);
+      toast.error(err?.response?.data?.error || "AI Assistant service error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copySuggestedCode = () => {
+    if (aiResult?.suggestedCode) {
+      navigator.clipboard.writeText(aiResult.suggestedCode);
+      toast.success("Suggested code copied to clipboard!");
+    }
+  };
+
+  const handleApply = () => {
+    if (aiResult?.suggestedCode) {
+      onApplyCode(aiResult.suggestedCode);
+      toast.success("Applied AI code to editor!", { icon: "✨" });
+    }
+  };
+
+  return (
+    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[440px] bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] shadow-2xl flex flex-col text-[var(--text-primary)] animate-slide-left transition-colors">
+      {/* Header */}
+      <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-subtle)]">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-lg shadow">
+            ✨
+          </div>
+          <div>
+            <h2 className="font-semibold text-[var(--text-primary)] text-sm">Gemini AI Assistant</h2>
+            <p className="text-[11px] text-[var(--text-secondary)]">Intelligent code analysis & fixes</p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--bg-root)] transition cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Quick Action Pills */}
+      <div className="p-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-wrap gap-2">
+        <button
+          onClick={() => handleAsk("EXPLAIN")}
+          disabled={loading}
+          className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-950/60 text-purple-300 border border-purple-700/50 hover:bg-purple-900/80 transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+        >
+          💡 Explain Code
+        </button>
+        <button
+          onClick={() => handleAsk("FIX")}
+          disabled={loading}
+          className="px-3 py-1.5 rounded-full text-xs font-medium bg-red-950/60 text-red-300 border border-red-700/50 hover:bg-red-900/80 transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+        >
+          🐞 Fix Bugs & Errors
+        </button>
+        <button
+          onClick={() => handleAsk("OPTIMIZE")}
+          disabled={loading}
+          className="px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-700/50 hover:bg-emerald-900/80 transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+        >
+          ⚡ Optimize O(N)
+        </button>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-16 space-y-3">
+            <div className="w-10 h-10 border-3 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-purple-300 animate-pulse">
+              Gemini is reviewing your code...
+            </p>
+          </div>
+        )}
+
+        {!loading && !aiResult && (
+          <div className="text-center py-14 px-4 text-gray-400 space-y-3">
+            <span className="text-4xl">🤖</span>
+            <h3 className="text-sm font-semibold text-gray-300">
+              Need help with your code?
+            </h3>
+            <p className="text-xs text-gray-500 max-w-xs mx-auto">
+              Select one of the quick actions above or ask any custom question about syntax, algorithm design, or edge cases.
+            </p>
+          </div>
+        )}
+
+        {!loading && aiResult && (
+          <div className="space-y-4">
+            {/* AI Explanation Card */}
+            <div className="bg-[#1b1b22] border border-gray-800 rounded-xl p-4 shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-800/80">
+                <span className="text-xs font-semibold text-purple-400 flex items-center gap-1.5">
+                  <span>✨</span> Analysis & Explanation
+                </span>
+              </div>
+              <MarkdownRenderer content={aiResult.response} />
+            </div>
+
+            {/* Suggested Code Card */}
+            {aiResult.suggestedCode && (
+              <div className="bg-[#18181f] border border-purple-800/40 rounded-xl overflow-hidden shadow-lg">
+                <div className="px-3 py-2 bg-[#1f1f2a] border-b border-gray-800 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                    ✨ Suggested Code ({currentLanguage})
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={copySuggestedCode}
+                      className="px-2 py-1 text-[10px] bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700 transition cursor-pointer"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={handleApply}
+                      className="px-2.5 py-1 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium transition cursor-pointer shadow"
+                    >
+                      Apply to Editor
+                    </button>
+                  </div>
+                </div>
+                <pre className="p-3 text-[11px] font-mono text-gray-200 overflow-x-auto max-h-80 bg-black/50">
+                  <code>{aiResult.suggestedCode}</code>
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Prompt Input Footer */}
+      <div className="p-3 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)]">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Ask AI anything about your code..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && prompt.trim() && !loading) {
+                e.preventDefault();
+                handleAsk("CHAT", prompt.trim());
+                setPrompt("");
+              }
+            }}
+            disabled={loading}
+            className="flex-1 bg-[var(--input-bg)] text-[var(--text-primary)] px-3 py-2 rounded-xl border border-[var(--border-subtle)] focus:outline-none focus:ring-1 focus:ring-purple-500 text-xs placeholder-gray-500 shadow-2xs"
+          />
+          <button
+            onClick={() => {
+              if (prompt.trim() && !loading) {
+                handleAsk("CHAT", prompt.trim());
+                setPrompt("");
+              }
+            }}
+            disabled={loading || !prompt.trim()}
+            className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition cursor-pointer shadow-sm"
+          >
+            Ask
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AiAssistant;
