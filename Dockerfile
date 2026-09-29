@@ -15,17 +15,13 @@ RUN if [ ! -f src/main/resources/application.properties ]; then cp src/main/reso
 # Package the application
 RUN ./mvnw clean package -DskipTests
 
-# Stage 2: Runtime environment with compilers & runtimes for process sandbox execution
-FROM debian:bookworm-slim
+# Stage 2: Runtime environment with Java 21 + all compilers & language runtimes
+FROM eclipse-temurin:21-jre-jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-# Install Java 21, GCC/G++, Python3, Node.js, npm, Go, Rust, PHP, Ruby, Bash, curl
+# Install essential compilers and language runtimes: GCC, G++, Python3, Node.js, npm, Go, Rust, PHP, Ruby, Bash, curl
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-21-jre-headless \
-    openjdk-21-jdk-headless \
     gcc \
     g++ \
     make \
