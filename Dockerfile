@@ -55,4 +55,4 @@ ENV PORT=8082
 EXPOSE 8082
 
 # Start Spring Boot application
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -Dspring.data.mongodb.uri=\"${SPRING_MONGODB_URI}\" -Dspring.mongodb.uri=\"${SPRING_MONGODB_URI}\" -Dcompiler.sandbox.type=process -jar app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
