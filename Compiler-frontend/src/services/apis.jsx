@@ -1,8 +1,7 @@
 /**
  * Centralized API endpoints configuration for all backend REST and WebSocket routes.
  */
-// const BASE_URL = "https://compiler.satyamvatsal.ovh";
-const BASE_URL = "http://localhost:8082";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8082";
 
 // AUTH ENDPOINTS
 export const endpoints = {

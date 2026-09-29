@@ -1,0 +1,15 @@
+spring.application.name=CompilerProject
+server.port=${PORT:8082}
+BASE_DIR=${COMPILER_BASE_DIR:${java.io.tmpdir}/compiler/}
+spring.mongodb.uri=${SPRING_MONGODB_URI:mongodb+srv://<username>:<password>@cluster0.nksf5u0.mongodb.net/compiler?appName=Cluster0}
+spring.data.mongodb.auto-index-creation=true
+
+# Sandbox Execution Engine Configuration
+# Options: auto (prefer Docker, fallback to process) | docker (strict Docker) | process (host OS)
+compiler.sandbox.type=auto
+compiler.sandbox.docker.image=collab-compiler-runner:latest
+compiler.sandbox.docker.memory=256m
+compiler.sandbox.docker.cpus=1.0
+compiler.sandbox.docker.pids-limit=64
+compiler.sandbox.docker.network=none
+compiler.sandbox.timeout-seconds=15

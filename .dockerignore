@@ -1,0 +1,8 @@
+﻿Compiler-frontend/
+Compiler/target/
+.git/
+.vscode/
+.idea/
+*.md
+verify_fixes.py
+test.js
