@@ -16,4 +16,7 @@ public class AiResponseDto {
     private String suggestedCode;
     private boolean success;
     private String error;
+    private Integer chunkIndex;
+    private Integer totalChunks;
+    private Integer promptWordCount;
 }

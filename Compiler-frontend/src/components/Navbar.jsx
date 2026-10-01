@@ -174,16 +174,16 @@ function Navbar({ stompClientRef, roomId, isCollaborating, myPermission = "EXECU
   };
 
   return (
-    <header className="w-full border-b transition-colors bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-primary)] px-3 py-2">
+    <header className="w-full relative border-b transition-colors bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-primary)] px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         {/* Left Section: Brand + Language + Execution Actions */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-2 mr-1">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-sm text-sm">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/25 text-sm">
               &lt;/&gt;
             </div>
-            <span className="font-extrabold tracking-tight text-sm hidden sm:inline-block bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="font-extrabold tracking-tight text-sm hidden sm:inline-block bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent select-none">
               CollabIDE
             </span>
           </div>
@@ -227,10 +227,10 @@ function Navbar({ stompClientRef, roomId, isCollaborating, myPermission = "EXECU
                 ? "View-Only mode: execution locked by host."
                 : "Execute Code (Run)"
             }
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
               isCollaborating && myPermission === "READ"
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed opacity-60"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25 hover:shadow-md"
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed opacity-60 shadow-sm"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-md"
             }`}
           >
             {loading ? (
@@ -295,12 +295,15 @@ function Navbar({ stompClientRef, roomId, isCollaborating, myPermission = "EXECU
           {/* Auth State */}
           {token ? (
             <div className="flex items-center gap-2">
+              <div className='w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center text-[10px] font-bold text-white'>
+                {(typeof user === "string" ? user : user?.userName || localStorage.getItem("user") || "U").charAt(0).toUpperCase()}
+              </div>
               <span className="text-xs font-semibold text-[var(--text-primary)] max-w-[100px] truncate">
                 {typeof user === "string" ? user : user?.userName || localStorage.getItem("user") || "User"}
               </span>
               <button
                 onClick={() => dispatch(logout(navigate))}
-                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-rose-500/40 text-rose-400 hover:bg-rose-500/15 transition cursor-pointer"
+                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-rose-500/40 text-rose-400 hover:bg-rose-500/20 transition cursor-pointer"
               >
                 Logout
               </button>
@@ -323,6 +326,7 @@ function Navbar({ stompClientRef, roomId, isCollaborating, myPermission = "EXECU
           )}
         </div>
       </div>
+      <div className='absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent' />
     </header>
   );
 }

@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --bg-root: #0b0f17;
-  --bg-surface: #131926;
-  --bg-subtle: #1c2436;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --input-bg: #0d121c;
+  --bg-root: #080c14;
+  --bg-surface: #0f1420;
+  --bg-subtle: #161d2e;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --text-primary: #e8edf5;
+  --text-secondary: #7b8ba5;
+  --input-bg: #0a0f1a;
+  --accent-primary: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.15);
 }
 
 html.light {
@@ -18,7 +20,12 @@ html.light {
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --input-bg: #ffffff;
+  --accent-primary: #4f46e5;
+  --accent-glow: rgba(79, 70, 229, 0.15);
 }
+
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.animate-slide-down { animation: slideDown 0.2s ease-out both; }
 
 html, body, #root {
   height: 100%;

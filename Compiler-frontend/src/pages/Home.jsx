@@ -406,6 +406,7 @@ function Home() {
         currentLanguage={language}
         currentOutput={output}
         onApplyCode={handleApplyAiCode}
+        token={token}
       />
     </>
   );

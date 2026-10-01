@@ -18,4 +18,6 @@ public class AiRequestDto {
     private String error;
     private String action;      // "EXPLAIN", "FIX", "OPTIMIZE", "CHAT"
     private String userMessage; // for custom prompt / questions
+    private Integer chunkIndex; // 1-based index (e.g., 1 for Chunk 1, or null for all)
+    private Integer totalChunks;
 }

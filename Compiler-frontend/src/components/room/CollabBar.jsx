@@ -35,7 +35,7 @@ function CollabBar({
 }) {
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] text-[var(--text-primary)] transition-colors">
+    <div className="relative flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] text-[var(--text-primary)] transition-colors">
       {/* Left Group: Room ID, Join/Create or Live Status */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[var(--text-secondary)] font-medium text-xs">Room:</span>
@@ -46,14 +46,14 @@ function CollabBar({
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
           disabled={isCollaborating}
-          className="bg-[var(--input-bg)] text-[var(--text-primary)] px-2.5 py-1 rounded-lg border border-[var(--border-subtle)] focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-mono shadow-2xs w-28 sm:w-36"
+          className="bg-[var(--input-bg)] text-[var(--text-primary)] px-2.5 py-1 rounded-lg border border-[var(--border-subtle)] focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs font-mono shadow-2xs w-28 sm:w-44"
         />
 
         {!isCollaborating ? (
           <>
             <button
               onClick={() => onJoinRoom()}
-              className="px-3 py-1 rounded font-medium text-xs transition-colors bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
+              className="px-3 py-1 rounded-lg shadow-sm font-medium text-xs transition-colors bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
             >
               Join
             </button>
@@ -62,18 +62,18 @@ function CollabBar({
 
             <button
               onClick={onCreateRoom}
-              className="px-3 py-1 rounded font-medium text-xs transition-colors bg-green-600 hover:bg-green-500 text-white cursor-pointer"
+              className="px-3 py-1 rounded-lg font-medium text-xs transition-colors bg-green-600 hover:bg-green-500 text-white cursor-pointer"
             >
-              Create Room
+              ➕ Create Room
             </button>
           </>
         ) : (
           <>
             <button
               onClick={onDisconnectRoom}
-              className="px-3 py-1 rounded font-medium text-xs transition-colors bg-red-600 hover:bg-red-500 text-white cursor-pointer"
+              className="px-3 py-1 rounded-lg font-medium text-xs transition-colors bg-red-600 hover:bg-red-500 text-white cursor-pointer"
             >
-              Disconnect
+              ⚡ Disconnect
             </button>
 
             <span className="text-emerald-400 text-xs flex items-center gap-1 font-medium bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded-full">
@@ -113,12 +113,16 @@ function CollabBar({
       </div>
 
       {/* Right Group: AI Assistant Trigger */}
-      <button
-        onClick={onOpenAiAssistant}
-        className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white flex items-center gap-1.5 shadow-md cursor-pointer transition"
-      >
-        <span>✨ AI Assistant</span>
-      </button>
+      <div className="relative">
+        <div className="absolute inset-0 animate-pulse bg-purple-500/20 blur-md rounded-full"></div>
+        <button
+          onClick={onOpenAiAssistant}
+          className="relative px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white flex items-center gap-1.5 shadow-md cursor-pointer transition"
+        >
+          <span>✨ AI Assistant</span>
+        </button>
+      </div>
+      <div className='absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent' />
     </div>
   );
 }

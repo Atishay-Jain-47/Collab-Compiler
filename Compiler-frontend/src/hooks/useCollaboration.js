@@ -77,6 +77,9 @@ export function useCollaboration({ currentUserName, token, initialCode, onChatMe
       const client = new Client({
         webSocketFactory: () => new SockJS(WS_URL),
         reconnectDelay: 5000,
+        // Pass JWT so the server can authenticate the STOMP CONNECT frame
+        // (enforced by WebSocketSecurityConfig on the backend)
+        connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
         onConnect: () => {
           console.log("Connected to Room:", roomId);
 

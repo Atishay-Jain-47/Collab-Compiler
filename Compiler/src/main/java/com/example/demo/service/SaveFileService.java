@@ -41,7 +41,10 @@ public class SaveFileService {
         String input = session.getInput() != null ? session.getInput() : "";
 
         String base = BASE_DIR.endsWith(File.separator) || BASE_DIR.endsWith("/") ? BASE_DIR : BASE_DIR + File.separator;
-        String dirPath = base + userName + File.separator;
+        // Append sessionId to isolate concurrent executions by the same user.
+        // Without this, two parallel runs for the same user would share the same
+        // directory and overwrite each other's source/input files.
+        String dirPath = base + userName + "_" + session.getSessionId() + File.separator;
 
         String fileName = switch (language) {
             case PYTHON -> "main.py";

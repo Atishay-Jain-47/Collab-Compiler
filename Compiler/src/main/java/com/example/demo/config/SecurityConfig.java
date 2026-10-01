@@ -47,7 +47,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/collab/**").permitAll()
+                        .requestMatchers("/ws-compiler/**").permitAll() // WebSocket SockJS handshake
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        .requestMatchers("/api/ai/**").authenticated()  // Require JWT for AI endpoints
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
