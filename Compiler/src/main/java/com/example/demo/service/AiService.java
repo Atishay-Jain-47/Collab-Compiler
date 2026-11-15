@@ -34,7 +34,7 @@ public class AiService {
     public static final int MAX_PROMPT_WORDS = 300;
     public static final int MAX_PROCESSED_CHUNKS = 10; // Safety cap (1000 lines max)
 
-    @Value("${GEMINI_API_KEY:}")
+    @Value("${gemini.api.key:${GEMINI_API_KEY:}}")
     private String geminiApiKey;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -111,6 +111,7 @@ public class AiService {
         String prompt = buildPromptWithChunks(action, language, code, error, userMsg, allChunks, targetedChunk);
 
         if (geminiApiKey == null || geminiApiKey.trim().isEmpty() || geminiApiKey.contains("YOUR_")) {
+            log.warn("Gemini API key is missing or placeholder (key='{}'). Using offline fallback.", geminiApiKey);
             AiResponseDto fallback = generateOfflineFallback(action, language, code, error);
             fallback.setChunkIndex(requestedChunkIndex);
             fallback.setTotalChunks(totalChunks);
@@ -118,11 +119,14 @@ public class AiService {
             return fallback;
         }
 
-        // Try gemini-2.5-flash first, fallback to gemini-1.5-flash
-        String[] modelsToTry = {"gemini-2.5-flash", "gemini-1.5-flash"};
+        log.info("Sending request to Gemini with API key of length: {}", geminiApiKey.trim().length());
+
+        // Multi-tier model fallback: Try active fast models first
+        String[] modelsToTry = {"gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite"};
         for (String modelName : modelsToTry) {
             try {
                 String url = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + geminiApiKey.trim();
+                log.info("Invoking Gemini model: {}", modelName);
 
                 Map<String, Object> requestBody = Map.of(
                         "contents", List.of(
@@ -169,7 +173,8 @@ public class AiService {
                             .promptWordCount(promptWords)
                             .build();
                 } else {
-                    log.warn("Gemini model {} returned status: {}, attempting next fallback if available", modelName, response.statusCode());
+                    log.warn("Gemini model {} returned status: {}, body: {}, attempting next fallback if available", 
+                            modelName, response.statusCode(), response.body());
                 }
             } catch (Exception e) {
                 log.error("Error communicating with Gemini model {}: ", modelName, e);

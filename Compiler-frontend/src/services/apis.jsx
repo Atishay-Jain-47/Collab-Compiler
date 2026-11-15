@@ -27,3 +27,9 @@ export const collabEndpoints = {
 export const aiEndpoints = {
   ASK_AI_API: BASE_URL + "/api/ai/ask",
 };
+
+// VERSION CONTROL ENDPOINTS
+export const versionEndpoints = {
+  VERSIONS_API: BASE_URL + "/api/versions",
+  REVERT_VERSION_API: (id) => `${BASE_URL}/api/versions/${id}/revert`,
+};

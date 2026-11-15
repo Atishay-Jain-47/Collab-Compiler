@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../services/operations/authApi";
 import { apiConnector } from "../services/apiConnector";
-import { runEndpoints } from "../services/apis";
+import { runEndpoints, versionEndpoints } from "../services/apis";
 import toast from "react-hot-toast";
 import { setLanguage, setOutput } from "../slices/codeSlice";
 import { extensions, detectLanguageFromFilename } from "../utils/languageExtension";
@@ -143,6 +143,25 @@ function Navbar({ stompClientRef, roomId, isCollaborating, myPermission = "EXECU
         dispatch(setOutput(data.output + "\n\n[Errors/Warnings]:\n" + data.error));
       } else {
         dispatch(setOutput(data.output !== undefined && data.output !== "" ? data.output : "Program executed with no output."));
+      }
+
+      // Auto-save version checkpoint on Run
+      if (code && code.trim()) {
+        try {
+          apiConnector(
+            "POST",
+            versionEndpoints.VERSIONS_API,
+            {
+              roomId: isCollaborating ? roomId : null,
+              versionName: `Run Checkpoint (${language})`,
+              message: data.error ? `Run output with error/warning` : `Successful execution output`,
+              code: code,
+              language: language,
+              autoSave: true,
+            },
+            token ? { Authorization: `Bearer ${token}` } : {}
+          ).catch(() => {});
+        } catch (_) {}
       }
 
       if (isCollaborating && stompClientRef?.current?.connected && roomId) {

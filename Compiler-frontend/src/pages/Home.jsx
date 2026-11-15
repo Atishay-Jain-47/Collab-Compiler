@@ -19,6 +19,7 @@ import CodeEditor from "../components/editor/CodeEditor";
 import IOConsole from "../components/editor/IOConsole";
 import ChatBox from "../components/chat/ChatBox";
 import AiAssistant from "../components/ai/AiAssistant";
+import VersionControlModal from "../components/room/VersionControlModal";
 
 // Custom Hooks
 import { useCollaboration } from "../hooks/useCollaboration";
@@ -50,6 +51,7 @@ function Home() {
     "anonymous";
 
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [versionControlOpen, setVersionControlOpen] = useState(false);
 
   // Chat Hook
   const {
@@ -74,6 +76,34 @@ function Home() {
     initialCode: code,
     onChatMessageReceived: handleIncomingChatMessage,
   });
+
+  // Auto-save checkpoint timer (every 5 minutes if code changed)
+  const lastSavedCodeRef = useRef(code);
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const currentCode = code;
+      if (!currentCode || !currentCode.trim() || currentCode === lastSavedCodeRef.current) {
+        return;
+      }
+      try {
+        const payload = {
+          roomId: collab.roomId || null,
+          versionName: "Auto-Save Checkpoint",
+          message: "Periodic 5-minute auto-save",
+          code: currentCode,
+          language: language,
+          autoSave: true,
+        };
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        await apiConnector("POST", versionEndpoints.VERSIONS_API, payload, headers);
+        lastSavedCodeRef.current = currentCode;
+      } catch (e) {
+        // Silent auto-save failure
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [code, language, collab.roomId, token]);
 
   // Initial code load from localStorage on language change
   useEffect(() => {
@@ -170,6 +200,16 @@ function Home() {
       dispatch(setCode(suggestedCode));
       localStorage.setItem(`code_${language}`, suggestedCode);
       localStorage.setItem("code", suggestedCode);
+    }
+  };
+
+  const handleRevertVersion = (revertedCode) => {
+    if (collab.isCollaborating) {
+      collab.updateYjsContent(revertedCode);
+    } else {
+      dispatch(setCode(revertedCode));
+      localStorage.setItem(`code_${language}`, revertedCode);
+      localStorage.setItem("code", revertedCode);
     }
   };
 
@@ -293,6 +333,7 @@ function Home() {
           myPermission={collab.myPermission}
           roomAdmin={collab.roomAdmin}
           currentUserName={currentUserName}
+          onOpenVersionControl={() => setVersionControlOpen(true)}
         />
 
         {/* Mobile Viewport Tab Switcher (Visible only on < lg screens) */}
@@ -407,6 +448,20 @@ function Home() {
         currentOutput={output}
         onApplyCode={handleApplyAiCode}
         token={token}
+      />
+
+      {/* Version Control & History Modal */}
+      <VersionControlModal
+        isOpen={versionControlOpen}
+        onClose={() => setVersionControlOpen(false)}
+        currentCode={code}
+        currentLanguage={language}
+        roomId={collab.roomId}
+        currentUserName={currentUserName}
+        token={token}
+        onRevert={handleRevertVersion}
+        isCollaborating={collab.isCollaborating}
+        myPermission={collab.myPermission}
       />
     </>
   );

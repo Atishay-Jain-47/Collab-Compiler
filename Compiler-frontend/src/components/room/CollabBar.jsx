@@ -32,6 +32,7 @@ function CollabBar({
   myPermission,
   roomAdmin,
   currentUserName,
+  onOpenVersionControl,
 }) {
 
   return (
@@ -112,15 +113,28 @@ function CollabBar({
         )}
       </div>
 
-      {/* Right Group: AI Assistant Trigger */}
-      <div className="relative">
-        <div className="absolute inset-0 animate-pulse bg-purple-500/20 blur-md rounded-full"></div>
+      {/* Right Group: Version Control & AI Assistant */}
+      <div className="flex items-center gap-2">
+        {/* Version History Button */}
         <button
-          onClick={onOpenAiAssistant}
-          className="relative px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white flex items-center gap-1.5 shadow-md cursor-pointer transition"
+          onClick={onOpenVersionControl}
+          className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-200 flex items-center gap-1.5 shadow-sm cursor-pointer transition hover:border-indigo-500/50 hover:text-white"
+          title="Open Version Control & History"
         >
-          <span>✨ AI Assistant</span>
+          <span>🌿</span>
+          <span className="hidden sm:inline">History</span>
         </button>
+
+        {/* AI Assistant Trigger */}
+        <div className="relative">
+          <div className="absolute inset-0 animate-pulse bg-purple-500/20 blur-md rounded-full"></div>
+          <button
+            onClick={onOpenAiAssistant}
+            className="relative px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white flex items-center gap-1.5 shadow-md cursor-pointer transition"
+          >
+            <span>✨ AI Assistant</span>
+          </button>
+        </div>
       </div>
       <div className='absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent' />
     </div>

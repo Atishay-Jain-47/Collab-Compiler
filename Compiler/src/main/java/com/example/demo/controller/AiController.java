@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 )
 public class AiController {
 
-    private static final int MAX_REQUESTS_PER_MINUTE = 1;
+    private static final int MAX_REQUESTS_PER_MINUTE = 5;
 
     private final AiService aiService;
 

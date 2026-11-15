@@ -20,7 +20,13 @@ import { collabEndpoints } from "../services/apis";
  * @param {function} params.onChatMessageReceived - Callback triggered on incoming chat events
  * @returns {Object} Collaborative session state, Yjs extension, and action dispatchers
  */
-export function useCollaboration({ currentUserName, token, initialCode, onChatMessageReceived }) {
+export function useCollaboration({
+  currentUserName,
+  token,
+  initialCode,
+  onChatMessageReceived,
+  onVersionEvent,
+}) {
 
   const dispatch = useDispatch();
   const { WS_URL, JOIN_ROOM_API, CREATE_ROOM_API, ROOM_DETAILS_API, UPDATE_PERMISSION_API } =
@@ -179,6 +185,25 @@ export function useCollaboration({ currentUserName, token, initialCode, onChatMe
                 } catch (e) {
                   console.error("Error parsing RUN_RESULT:", e);
                 }
+              }
+            } else if (payload.type === "REVERT_TO_VERSION") {
+              if (payload.content !== undefined) {
+                // Update Yjs doc and Redux state with reverted code
+                ydoc.transact(() => {
+                  ytextRef.current.delete(0, ytextRef.current.length);
+                  ytextRef.current.insert(0, payload.content);
+                }, "revert");
+                dispatch(setCode(payload.content));
+                localStorage.setItem("code", payload.content);
+                toast(`Code reverted to earlier version by ${payload.senderId}`, { icon: "⏪" });
+                if (onVersionEvent) {
+                  onVersionEvent({ type: "REVERT", senderId: payload.senderId, code: payload.content });
+                }
+              }
+            } else if (payload.type === "VERSION_CREATED") {
+              toast(`New version saved by ${payload.senderId}`, { icon: "🔖" });
+              if (onVersionEvent) {
+                onVersionEvent({ type: "CREATED", senderId: payload.senderId, details: payload.content });
               }
             }
           });
