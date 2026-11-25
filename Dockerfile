@@ -1,26 +1,32 @@
 # Multi-stage Dockerfile for Collab Compiler Backend on Render
-# Stage 1: Build JAR using Maven & Java 21
-FROM eclipse-temurin:21-jdk-jammy AS builder
-WORKDIR /app
-COPY Compiler/.mvn/ .mvn/
-COPY Compiler/mvnw Compiler/pom.xml ./
-RUN chmod +x ./mvnw
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B || true
 
-# Copy source code and application.properties.example into place if application.properties is missing
+# Stage 1: Build JAR using Maven & Java 21
+FROM maven:3.9.12-eclipse-temurin-21 AS builder
+
+WORKDIR /app
+
+# Download and cache dependencies
+COPY Compiler/pom.xml ./pom.xml
+RUN mvn -B dependency:go-offline
+
+# Copy source code
 COPY Compiler/src ./src
-RUN if [ ! -f src/main/resources/application.properties ]; then cp src/main/resources/application.properties.example src/main/resources/application.properties; fi
+
+# Create application.properties if missing
+RUN if [ ! -f src/main/resources/application.properties ]; then \
+    cp src/main/resources/application.properties.example \
+    src/main/resources/application.properties; \
+    fi
 
 # Package the application
-RUN ./mvnw clean package -DskipTests
+RUN mvn -B clean package -DskipTests
 
-# Stage 2: Runtime environment with Java 21 + all compilers & language runtimes
+# Stage 2: Runtime environment with Java 21
 FROM eclipse-temurin:21-jre-jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install essential compilers and language runtimes: GCC, G++, Python3, Node.js, npm, Go, Rust, PHP, Ruby, Bash, curl
+# Install compilers and language runtimes
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
@@ -45,12 +51,13 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app /tmp/compiler
 
 WORKDIR /app
+
 USER appuser
 
 # Copy built JAR from builder stage
 COPY --from=builder --chown=appuser:appuser /app/target/*.jar app.jar
 
-# Render assigns port dynamically via $PORT
+# Render assigns port dynamically
 ENV PORT=8082
 EXPOSE 8082
 
