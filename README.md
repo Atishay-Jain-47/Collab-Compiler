@@ -1,5 +1,8 @@
 # ⚡ Real-Time Online Collaborative Compiler & Code Execution Engine
 
+> 📖 **Looking for full system architecture, low-level design diagrams, complete API references, and developer onboarding?**  
+> Check out the [Complete Technical Project Documentation](PROJECT_DOCUMENTATION.md).
+
 A production-grade, highly scalable **Online Collaborative Code Editor and Multi-Language Execution Engine** built with **Spring Boot 3 (Java 21)**, **React 19**, **Yjs (CRDT)**, and **WebSocket (STOMP / SockJS)**.
 
 Features real-time conflict-free collaborative editing, role-based room administration (`Host`, `Runner`, `Editor`, `Viewer`), sandboxed process execution with strict resource constraints, shared execution output and standard input, Google Gemini AI code assistance, local file import with drag-and-drop, and in-room chat.
