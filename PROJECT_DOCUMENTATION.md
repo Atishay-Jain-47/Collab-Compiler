@@ -665,7 +665,7 @@ classDiagram
 ### 7.1 Complete REST Endpoints Table
 
 | Method | Endpoint | Purpose | Auth | Path/Query Params | Request Body | Success Response | Error Responses | Source File |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/auth/signup` | Register new user account | None | None | `{"userName": "alice", "password": "secret"}` | `200 OK` + `CreateUserResponseDto` | `400 Bad Request` (user exists) | `AuthController.java` |
 | `POST` | `/auth/login` | Authenticate user & get JWT | None | None | `{"userName": "alice", "password": "secret"}` | `200 OK` + `LoginResponseDto` (token) | `401 Unauthorized` (bad credentials) | `AuthController.java` |
 | `POST` | `/collab/info` | Create new collaborative room | None* | None | `{"userName": "alice", "code": "...", "language": "PYTHON", "input": ""}` | `201 Created` + `CreateSessionResponseDto` | `500 Internal Error` | `RoomController.java` |
